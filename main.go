@@ -13,11 +13,19 @@ func main() {
 	wg := sync.WaitGroup{}
 	wg.Add(1)
 
+	fmt.Print("Digite o CEP: ")
+	var cep string
+	_, err := fmt.Scan(&cep)
+	if err != nil {
+		fmt.Print("Valor invalido.")
+		return
+	}
+
 	c1 := make(chan []byte)
 	c2 := make(chan []byte)
 
-	go brasilApiThread(c1, &wg)
-	go viaCepThread(c2, &wg)
+	go brasilApiThread(cep, c1, &wg)
+	go viaCepThread(cep, c2, &wg)
 
 	wg.Done()
 
@@ -37,11 +45,13 @@ func main() {
 	}
 }
 
-func brasilApiThread(c1 chan<- []byte, wg *sync.WaitGroup) {
+func brasilApiThread(cep string, c1 chan<- []byte, wg *sync.WaitGroup) {
 
 	wg.Wait()
 
-	req, err := http.NewRequest("GET", "https://brasilapi.com.br/api/cep/v1/85813020", nil)
+	url := fmt.Sprintf("https://brasilapi.com.br/api/cep/v1/%s", cep)
+
+	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		fmt.Printf("err.Error(): %v\n", err.Error())
 	}
@@ -56,11 +66,13 @@ func brasilApiThread(c1 chan<- []byte, wg *sync.WaitGroup) {
 	c1 <- body
 }
 
-func viaCepThread(c2 chan<- []byte, wg *sync.WaitGroup) {
+func viaCepThread(cep string, c2 chan<- []byte, wg *sync.WaitGroup) {
 
 	wg.Wait()
 
-	req, err := http.NewRequest("GET", "https://viacep.com.br/ws/85813020/json/", nil)
+	url := fmt.Sprintf("https://viacep.com.br/ws/%s/json/", cep)
+
+	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		fmt.Printf("err.Error(): %v\n", err.Error())
 	}
